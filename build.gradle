@@ -1,0 +1,25 @@
+apply plugin: 'java'
+
+repositories {
+    jcenter()
+}
+
+def smack_version = "4.2.0"
+
+dependencies {
+    compile 'org.slf4j:slf4j-api:1.7.21'
+    testCompile 'junit:junit:4.12'
+    
+    compile 'com.google.code.gson:gson:2.7'
+    compile 'com.google.guava:guava:18.0'
+    
+    compile "org.jxmpp:jxmpp-jid:0.4.1"
+    
+    compile "org.igniterealtime.smack:smack-core:${smack_version}"
+    compile "org.igniterealtime.smack:smack-tcp:${smack_version}"
+    compile "org.igniterealtime.smack:smack-resolver-dnsjava:${smack_version}"
+    compile "org.igniterealtime.smack:smack-extensions:${smack_version}"
+    compile "org.igniterealtime.smack:smack-im:${smack_version}"
+    compile "org.igniterealtime.smack:smack-java7:${smack_version}"
+    compile "org.igniterealtime.smack:smack-experimental:${smack_version}"
+}
