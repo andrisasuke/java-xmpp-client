@@ -2,6 +2,7 @@ package com.xmpp.client;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 
 import org.jivesoftware.smack.ConnectionConfiguration;
 import org.jivesoftware.smack.SmackException;
@@ -14,9 +15,16 @@ import org.jivesoftware.smack.packet.Presence;
 import org.jivesoftware.smack.packet.Presence.Type;
 import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 import org.jivesoftware.smack.tcp.XMPPTCPConnectionConfiguration;
+import org.jivesoftware.smackx.disco.ServiceDiscoveryManager;
+import org.jivesoftware.smackx.disco.packet.DiscoverInfo;
+import org.jivesoftware.smackx.disco.packet.DiscoverItems;
+import org.jivesoftware.smackx.pubsub.PubSubManager;
 import org.jivesoftware.smackx.push_notifications.PushNotificationsManager;
+import org.jxmpp.jid.DomainBareJid;
 import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.stringprep.XmppStringprepException;
+
+import com.xmpp.client.custom.EnablePushNotificationsIQ;
 
 public class XmppManager {
 
@@ -40,7 +48,6 @@ public class XmppManager {
 		config.setSecurityMode(ConnectionConfiguration.SecurityMode.disabled);
         config.setHost(server);
         config.setPort(port);
-		config.setSendPresence(true);
 		config.setDebuggerEnabled(true);
 		config.setXmppDomain(server);
 		
@@ -56,23 +63,29 @@ public class XmppManager {
 		connection.sendStanza(presence);
 	}
 	
-	public void sendIQPacket(IQ packet){
-		try {
-			connection.sendStanza(packet);
-		} catch (NotConnectedException | InterruptedException e) {
-			System.out.println("failed sending IQ "+ e.getMessage());
-		}
+	public boolean sendIQPacket(IQ packet){
+		//	connection.sendStanza(packet);
+			try {
+				IQ responseIQ = connection.createStanzaCollectorAndSend(packet).nextResultOrThrow();
+				return responseIQ.getType() 
+		        		!= org.jivesoftware.smack.packet.IQ.Type.error;
+			} catch (NoResponseException | XMPPErrorException | 
+					NotConnectedException | InterruptedException e) {
+				System.out.println("failed sending IQ "+ e.getMessage());
+			}
+		return false;
 	}
 	
-	public void enablePush(String jid, String node, HashMap<String, String> publishOptions) 
+	public boolean enablePush(String jid, String node, HashMap<String, String> publishOptions) 
 			throws NoResponseException, XMPPErrorException, NotConnectedException, 
 			XmppStringprepException, InterruptedException{
-		
-		PushNotificationsManager pushNotificationsManager =
-				PushNotificationsManager.getInstanceFor(connection);
-		if(publishOptions != null && !publishOptions.isEmpty())
-			pushNotificationsManager.enable(JidCreate.from(jid), node, publishOptions);
-		else pushNotificationsManager.enable(JidCreate.from(jid), node);
+	
+		EnablePushNotificationsIQ iq = 
+				new EnablePushNotificationsIQ(JidCreate.from(jid), node, publishOptions);	
+		IQ responseIQ = connection.createStanzaCollectorAndSend(iq).nextResultOrThrow();
+        
+		return responseIQ.getType() 
+        		!= org.jivesoftware.smack.packet.IQ.Type.error;
 		
 	}
 }
